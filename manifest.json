@@ -3,7 +3,7 @@
 	"name": "VoiceNotes",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Quickly convert voice recordings to text notes in Obsidian using OpenAI Whisper API",
+	"description": "Quickly convert voice recordings to text notes using OpenAI Whisper API",
 	"author": "LeonTing1010",
 	"authorUrl": "https://github.com/LeonTing1010/VoiceNotes",
 	"fundingUrl": "https://ko-fi.com/lt1010",

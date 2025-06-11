@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS: VoiceNotesSettings = {
 	enableTranscription: false,
 };
 
-// 简化的录音状态管理
+// Simplified recording state management
 class RecordingState {
 	isRecording: boolean = false;
 	mediaRecorder: MediaRecorder | null = null;
@@ -20,7 +20,7 @@ class RecordingState {
 	mimeType: string = 'audio/webm';
 }
 
-// 设置页面
+// Settings page
 class VoiceNotesSettingTab extends PluginSettingTab {
 	plugin: VoiceNotesPlugin;
 
@@ -33,12 +33,12 @@ class VoiceNotesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'VoiceNotes 设置' });
+		containerEl.createEl('h2', { text: 'VoiceNotes Settings' });
 
-		// OpenAI API Key 设置
+		// OpenAI API Key setting
 		new Setting(containerEl)
 			.setName('OpenAI API Key')
-			.setDesc('请输入您的 OpenAI API Key')
+			.setDesc('Enter your OpenAI API Key')
 			.addText(text => text
 				.setPlaceholder('sk-...')
 				.setValue(this.plugin.settings.openaiApiKey)
@@ -47,10 +47,10 @@ class VoiceNotesSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		// 启用转录设置
+		// Enable transcription setting
 		new Setting(containerEl)
-			.setName('启用语音转录')
-			.setDesc('开启后将使用 OpenAI Whisper API 自动转录录音内容')
+			.setName('Enable Voice Transcription')
+			.setDesc('When enabled, will use OpenAI Whisper API to automatically transcribe audio content')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.enableTranscription)
 				.onChange(async (value) => {
@@ -68,7 +68,7 @@ export default class VoiceNotesPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// 创建状态栏项目
+		// Create status bar item
 		this.statusBarItem = this.addStatusBarItem();
 		this.statusBarItem.setText('🎤 VoiceNotes');
 		this.statusBarItem.style.cursor = 'pointer';
@@ -76,21 +76,21 @@ export default class VoiceNotesPlugin extends Plugin {
 			this.toggleRecording();
 		});
 
-		// 添加功能区图标
-		this.addRibbonIcon('microphone', 'VoiceNotes: 录音', () => {
+		// Add ribbon icon
+		this.addRibbonIcon('microphone', 'VoiceNotes: Recording', () => {
 			this.toggleRecording();
 		});
 
-		// 添加命令
+		// Add command
 		this.addCommand({
 			id: 'toggle-recording',
-			name: '开始/停止录音',
+			name: 'Start/Stop Recording',
 			callback: () => {
 				this.toggleRecording();
 			}
 		});
 
-		// 添加设置页面
+		// Add settings page
 		this.addSettingTab(new VoiceNotesSettingTab(this.app, this));
 	}
 
@@ -118,12 +118,12 @@ export default class VoiceNotesPlugin extends Plugin {
 
 	async startRecording() {
 		if (this.recordingState.isRecording) {
-			new Notice('已经在录音中...');
+			new Notice('Already recording...');
 			return;
 		}
 
 		try {
-			// 获取麦克风权限
+			// Get microphone permission
 			const stream = await navigator.mediaDevices.getUserMedia({ 
 				audio: {
 					echoCancellation: false,
@@ -134,7 +134,7 @@ export default class VoiceNotesPlugin extends Plugin {
 				} 
 			});
 
-			// 检测支持的音频格式
+			// Detect supported audio formats
 			const formatOptions = [
 				{ mimeType: 'audio/webm;codecs=opus', ext: '.webm' },
 				{ mimeType: 'audio/webm', ext: '.webm' },
@@ -151,41 +151,41 @@ export default class VoiceNotesPlugin extends Plugin {
 				}
 			}
 
-			// 初始化录音状态
+			// Initialize recording state
 			this.recordingState = new RecordingState();
 			this.recordingState.isRecording = true;
 			this.recordingState.startTime = Date.now();
 			this.recordingState.stream = stream;
 			this.recordingState.mimeType = selectedFormat.mimeType;
 
-			// 创建 MediaRecorder
+			// Create MediaRecorder
 			this.recordingState.mediaRecorder = new MediaRecorder(stream, {
 				mimeType: selectedFormat.mimeType,
 				audioBitsPerSecond: 64000
 			});
 
-			// 收集音频数据
+			// Collect audio data
 			this.recordingState.mediaRecorder.ondataavailable = (event) => {
 				if (event.data && event.data.size > 0) {
 					this.recordingState.audioChunks.push(event.data);
 				}
 			};
 
-			// 录音停止时的处理
+			// Handle recording stop
 			this.recordingState.mediaRecorder.onstop = () => {
 				this.processRecording();
 			};
 
-			// 开始录音
+			// Start recording
 			this.recordingState.mediaRecorder.start(1000);
 			
-			// 更新状态栏
+			// Update status bar
 			this.updateStatusBar();
-			new Notice('🔴 开始录音...');
+			new Notice('🔴 Recording started...');
 
 		} catch (error) {
-			console.error('录音启动失败:', error);
-			new Notice(`无法访问麦克风: ${error.message}`);
+			console.error('Failed to start recording:', error);
+			new Notice(`Cannot access microphone: ${error.message}`);
 		}
 	}
 
@@ -196,137 +196,137 @@ export default class VoiceNotesPlugin extends Plugin {
 
 		this.recordingState.isRecording = false;
 
-		// 停止录音
+		// Stop recording
 		if (this.recordingState.mediaRecorder) {
 			this.recordingState.mediaRecorder.stop();
 		}
 
-		// 清理音频流
+		// Clean up audio stream
 		if (this.recordingState.stream) {
 			this.recordingState.stream.getTracks().forEach(track => track.stop());
 		}
 
-		// 更新状态栏
+		// Update status bar
 		this.statusBarItem?.setText('🎤 VoiceNotes');
-		new Notice('🛑 录音已停止');
+		new Notice('🛑 Recording stopped');
 	}
 
 	async processRecording() {
 		if (this.recordingState.audioChunks.length === 0) {
-			new Notice('❌ 录音数据为空');
+			new Notice('❌ Recording data is empty');
 			return;
 		}
 
-		// 创建音频文件
+		// Create audio file
 		const audioBlob = new Blob(this.recordingState.audioChunks, { 
 			type: this.recordingState.mimeType 
 		});
 
-		// 1. 保存音频文件到笔记
+		// 1. Save audio file to note
 		const audioLink = await this.saveAudioFile(audioBlob);
 		if (audioLink) {
-			this.insertTextToEditor(`### 语音笔记\n${audioLink}\n\n`);
+			this.insertTextToEditor(`### Voice Note\n${audioLink}\n\n`);
 		}
 
-		// 2. 如果启用了转录，则进行转录
+		// 2. If transcription is enabled, perform transcription
 		if (this.settings.enableTranscription && this.settings.openaiApiKey) {
-			new Notice('🔄 正在转录...');
+			new Notice('🔄 Transcribing...');
 			try {
 				const transcription = await this.transcribeAudio(audioBlob);
 				if (transcription) {
-					this.insertTextToEditor(`**转录内容:**\n${transcription}\n\n`);
-					new Notice('✅ 转录完成');
+					this.insertTextToEditor(`**Transcription:**\n${transcription}\n\n`);
+					new Notice('✅ Transcription completed');
 				}
 			} catch (error) {
-				console.error('转录失败:', error);
-				new Notice(`❌ 转录失败: ${error.message}`);
+				console.error('Transcription failed:', error);
+				new Notice(`❌ Transcription failed: ${error.message}`);
 			}
 		}
 
-		// 清理状态
+		// Clean up state
 		this.recordingState.audioChunks = [];
 	}
 
 	async saveAudioFile(audioBlob: Blob): Promise<string | null> {
 		try {
-			// 确定文件扩展名
+			// Determine file extension
 			let extension = '.webm';
 			if (audioBlob.type.includes('webm')) extension = '.webm';
 			else if (audioBlob.type.includes('mp3') || audioBlob.type.includes('mpeg')) extension = '.mp3';
 			else if (audioBlob.type.includes('wav')) extension = '.wav';
 			else if (audioBlob.type.includes('ogg')) extension = '.ogg';
 
-			// 生成文件名
+			// Generate filename
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 			const filename = `voice-note-${timestamp}${extension}`;
 
-			// 获取当前文件的目录
+			// Get current file directory
 			let folderPath = '';
 			const activeFile = this.app.workspace.getActiveFile();
 			if (activeFile) {
 				folderPath = activeFile.parent?.path || '';
 			}
 
-			// 构建完整路径
+			// Build full path
 			const audioFilePath = folderPath ? `${folderPath}/${filename}` : filename;
 
-			// 保存文件
+			// Save file
 			const arrayBuffer = await audioBlob.arrayBuffer();
 			await this.app.vault.createBinary(audioFilePath, arrayBuffer);
 
-			// 返回 markdown 链接
+			// Return markdown link
 			return `![${filename}](${audioFilePath})`;
 
 		} catch (error) {
-			console.error('保存音频文件失败:', error);
-			new Notice(`❌ 保存音频文件失败: ${error.message}`);
+			console.error('Failed to save audio file:', error);
+			new Notice(`❌ Failed to save audio file: ${error.message}`);
 			return null;
 		}
 	}
 
 	async transcribeAudio(audioBlob: Blob): Promise<string> {
 		if (!this.settings.openaiApiKey) {
-			throw new Error('OpenAI API Key 未配置');
+			throw new Error('OpenAI API Key not configured');
 		}
 
-		// 创建多部分表单数据边界
+		// Create multipart form data boundary
 		const boundary = '----formdata-obsidian-' + Math.random().toString(36);
 		
-		// 确定文件名
+		// Determine filename
 		let filename = 'audio.webm';
 		if (audioBlob.type.includes('webm')) filename = 'audio.webm';
 		else if (audioBlob.type.includes('mp3') || audioBlob.type.includes('mpeg')) filename = 'audio.mp3';
 		else if (audioBlob.type.includes('wav')) filename = 'audio.wav';
 		else if (audioBlob.type.includes('ogg')) filename = 'audio.ogg';
 
-		// 手动构建多部分表单数据
+		// Manually build multipart form data
 		const audioArrayBuffer = await audioBlob.arrayBuffer();
 		const audioBytes = new Uint8Array(audioArrayBuffer);
 		
 		const textEncoder = new TextEncoder();
 		const formParts: Uint8Array[] = [];
 		
-		// 添加文件字段
+		// Add file field
 		formParts.push(textEncoder.encode(`--${boundary}\r\n`));
 		formParts.push(textEncoder.encode(`Content-Disposition: form-data; name="file"; filename="${filename}"\r\n`));
 		formParts.push(textEncoder.encode(`Content-Type: ${audioBlob.type}\r\n\r\n`));
 		formParts.push(audioBytes);
 		formParts.push(textEncoder.encode('\r\n'));
 		
-		// 添加模型字段
+		// Add model field
 		formParts.push(textEncoder.encode(`--${boundary}\r\n`));
 		formParts.push(textEncoder.encode(`Content-Disposition: form-data; name="model"\r\n\r\n`));
 		formParts.push(textEncoder.encode('whisper-1\r\n'));
 		
-		// 添加语言字段
+		// Add language field
 		formParts.push(textEncoder.encode(`--${boundary}\r\n`));
 		formParts.push(textEncoder.encode(`Content-Disposition: form-data; name="language"\r\n\r\n`));
 		formParts.push(textEncoder.encode('zh\r\n'));
 		
-		// 结束边界
+		// End boundary
 		formParts.push(textEncoder.encode(`--${boundary}--\r\n`));
 		
-		// 计算总长度并合并所有部分
+		// Calculate total length and merge all parts
 		const totalLength = formParts.reduce((sum, part) => sum + part.length, 0);
 		const formDataBuffer = new Uint8Array(totalLength);
 		let offset = 0;
@@ -335,7 +335,7 @@ export default class VoiceNotesPlugin extends Plugin {
 			offset += part.length;
 		}
 
-		// 使用 Obsidian 的 requestUrl 方法发送请求
+		// Use Obsidian's requestUrl method to send request
 		try {
 			const response = await requestUrl({
 				url: 'https://api.openai.com/v1/audio/transcriptions',
@@ -350,20 +350,20 @@ export default class VoiceNotesPlugin extends Plugin {
 			if (response.json && response.json.text) {
 				return response.json.text.trim();
 			} else {
-				throw new Error('转录结果格式无效');
+				throw new Error('Invalid transcription result format');
 			}
 
 		} catch (error) {
-			console.error('OpenAI API 错误:', error);
+			console.error('OpenAI API error:', error);
 			
-			// 处理不同类型的错误
-			let errorMessage = '转录失败';
+			// Handle different types of errors
+			let errorMessage = 'Transcription failed';
 			if (error.status === 401) {
-				errorMessage = 'API Key 无效或未授权';
+				errorMessage = 'Invalid API Key or unauthorized';
 			} else if (error.status === 429) {
-				errorMessage = 'API 请求频率超限，请稍后重试';
+				errorMessage = 'API request rate limit exceeded, please try again later';
 			} else if (error.status === 403) {
-				errorMessage = 'API 访问被拒绝，请检查 API Key 权限';
+				errorMessage = 'API access denied, please check API Key permissions';
 			} else if (error.message) {
 				errorMessage = error.message;
 			}
@@ -379,19 +379,19 @@ export default class VoiceNotesPlugin extends Plugin {
 
 		const activeLeaf = this.app.workspace.activeLeaf;
 		if (!activeLeaf) {
-			new Notice('❌ 没有活跃的笔记页面');
+			new Notice('❌ No active note page');
 			return;
 		}
 
 		const view = activeLeaf.view;
 		if (view.getViewType() !== 'markdown') {
-			new Notice('❌ 当前页面不是 Markdown 笔记');
+			new Notice('❌ Current page is not a Markdown note');
 			return;
 		}
 
 		const editor = (view as any).editor;
 		if (!editor) {
-			new Notice('❌ 无法找到编辑器');
+			new Notice('❌ Cannot find editor');
 			return;
 		}
 
@@ -401,8 +401,8 @@ export default class VoiceNotesPlugin extends Plugin {
 			editor.replaceRange(textToInsert, cursor);
 			editor.setCursor(cursor.line + textToInsert.split('\n').length - 1, 0);
 		} catch (error) {
-			console.error('插入文本失败:', error);
-			new Notice(`❌ 插入文本失败: ${error.message}`);
+			console.error('Failed to insert text:', error);
+			new Notice(`❌ Failed to insert text: ${error.message}`);
 		}
 	}
 
@@ -411,9 +411,9 @@ export default class VoiceNotesPlugin extends Plugin {
 
 		if (this.recordingState.isRecording) {
 			const duration = Math.floor((Date.now() - this.recordingState.startTime) / 1000);
-			this.statusBarItem.setText(`🔴 录音中 ${duration}s`);
+			this.statusBarItem.setText(`🔴 Recording ${duration}s`);
 			
-			// 每秒更新一次
+			// Update every second
 			setTimeout(() => {
 				if (this.recordingState.isRecording) {
 					this.updateStatusBar();

@@ -2,8 +2,6 @@
 
 🎤 Quickly convert voice recordings to text notes in Obsidian
 
-[![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/lt1010)
-
 ## 📢 Current Status
 
 **Simplified Version**: Supports OpenAI Whisper transcription service only. Stable and easy to use.
@@ -92,7 +90,7 @@ This plugin uses OpenAI Whisper API, costs are borne by the user:
 
 If you find this plugin helpful, consider supporting development:
 
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/lt1010)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/lt1010/3)
 
 ## License
 
